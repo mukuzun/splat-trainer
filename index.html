@@ -137,8 +137,7 @@ select.inp{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 5
 .empty{color:var(--muted);font-size:13px;text-align:center;padding:18px 0;line-height:1.7}
 
 /* ---- training: map-reading drill ---- */
-#pg-tr.on{display:flex;flex-direction:column;height:calc(100dvh - 156px);min-height:360px}
-#pg-tr h4.sec{margin:2px 0 8px;flex:none}
+#pg-tr h4.sec{margin:2px 0 8px}
 .lampbar{display:flex;gap:6px;justify-content:center;align-items:center;background:var(--surface2);
   border:1px solid var(--line);border-radius:16px;padding:7px;margin-bottom:8px;user-select:none;flex:none}
 .lampbar .lp{width:22px;height:22px;border-radius:8px;transition:all .15s;transform:rotate(45deg);margin:3px}
@@ -162,7 +161,7 @@ select.inp{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 5
 .qbox .opts button{background:var(--surface2);border:1px solid var(--line);color:var(--text);
   font-family:var(--disp);font-size:20px;min-width:66px;padding:14px 18px;border-radius:14px;cursor:pointer}
 .qbox .opts button:active{transform:scale(.95);background:var(--cyan);color:#15141F;border-color:var(--cyan)}
-.field{position:relative;flex:1;min-height:120px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+.field{position:relative;height:clamp(140px,34vh,320px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
   margin-bottom:8px;overflow:hidden;touch-action:manipulation}
 .blob{position:absolute;width:52px;height:52px;border-radius:55% 45% 60% 40%/50% 60% 40% 55%;
   background:var(--cyan);display:flex;align-items:center;justify-content:center;cursor:pointer;
@@ -353,6 +352,16 @@ small.note{display:block;color:var(--muted);font-size:11.5px;line-height:1.6;mar
   <!-- ============ TRAINING(map-reading) ============ -->
   <section class="page" id="pg-tr">
     <h4 class="sec">マップ読み:手元に集中しながら敵の位置を把握</h4>
+    <details class="howto">
+      <summary>遊び方</summary>
+      <small class="note">
+        下のフィールドの数字インクを<b>1から順番にタップ</b>(=塗り・撃ち合いの代わり。集中を持っていかれる作業役)。最後まで押し切ると新しい配置でループ。
+        その間、上の<b>イカランプ</b>で味方(緑)・敵(ピンク)の生死=人数有利/不利が変化し、
+        ミニマップでは生きているイカが動き、ときどき潜伏(消える)します。
+        <b>突然クイズだけの画面になり「人数は有利?不利?」「敵/味方はどこに多い?」「敵は何人見えた?」</b>と聞かれるので、
+        手元をやりながらチラ見で盤面を覚えて即答。実戦の「塗りながら盤面を読む」神経を鍛えます。正解率80%目標。
+      </small>
+    </details>
     <div class="lampbar" id="lampBar"></div>
     <div class="minimap" id="minimap">
       <div class="zg" style="left:33.3%"></div>
@@ -371,18 +380,8 @@ small.note{display:block;color:var(--muted);font-size:11.5px;line-height:1.6;mar
       <button data-d="hard" onclick="setDiff('hard')">むずい</button>
     </div>
     <div class="row" style="margin-top:0">
-      <button class="btn lime" id="trBtn" onclick="startTraining()" style="flex:1">スタート(60秒)</button>
+      <button class="btn lime" id="trBtn" onclick="toggleTraining()" style="flex:1">スタート(60秒)</button>
     </div>
-    <details class="howto">
-      <summary>遊び方</summary>
-      <small class="note">
-        下のフィールドの数字インクを<b>1から順番にタップ</b>(=塗り・撃ち合いの代わり。集中を持っていかれる作業役)。最後まで押し切ると新しい配置でループ。
-        その間、上の<b>イカランプ</b>で味方(緑)・敵(ピンク)の生死=人数有利/不利が変化し、
-        ミニマップでは生きているイカが動き、ときどき潜伏(消える)します。
-        <b>突然クイズだけの画面になり「人数は有利?不利?」「敵/味方はどこに多い?」「敵は何人見えた?」</b>と聞かれるので、
-        手元をやりながらチラ見で盤面を覚えて即答。実戦の「塗りながら盤面を読む」神経を鍛えます。正解率80%目標。
-      </small>
-    </details>
   </section>
 </main>
 
@@ -728,12 +727,13 @@ function moveAll(){
   tr.players.forEach(placePlayer);
   drawLamps();
 }
+function toggleTraining(){ if(tr.on)stopTraining(); else startTraining(); }
 function startTraining(){
   if(tr.on)return;
   tr={on:true,seen:0,events:0,time:60,timers:[],players:[],quizTimeout:null,next:1,sets:0};
   makePlayers(); newSet(); upd();
   document.getElementById('drillQuiz').classList.remove('on');
-  document.getElementById('trBtn').textContent='プレイ中…';
+  document.getElementById('trBtn').textContent='■ 中断する';
   tr.timers.push(setInterval(()=>{tr.time--;upd();if(tr.time<=0)endTraining();},1000));
   tr.timers.push(setInterval(moveAll,900));
   scheduleQuiz();
@@ -836,10 +836,19 @@ function upd(){
   document.getElementById('trTime').textContent=tr.time;
   document.getElementById('trAware').textContent=tr.seen+'/'+tr.events;
 }
-function endTraining(){
+function cleanupTraining(){
   tr.on=false; tr.timers.forEach(t=>{clearInterval(t);clearTimeout(t);});
   document.getElementById('field').innerHTML='';
   document.getElementById('drillQuiz').classList.remove('on');
+}
+function stopTraining(){
+  if(!tr.on)return;
+  cleanupTraining();
+  document.getElementById('trBtn').textContent='スタート(60秒)';
+  toast('中断しました');
+}
+function endTraining(){
+  cleanupTraining();
   document.getElementById('trBtn').textContent='もう一回(60秒)';
   const rate=tr.events?Math.round(100*tr.seen/tr.events):0;
   let msg;
