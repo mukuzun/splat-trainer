@@ -422,9 +422,9 @@ small.note{display:block;color:var(--muted);font-size:11.5px;line-height:1.6;mar
     </div>
     <div class="field" id="field"></div>
     <div class="hud">
-      <div>次:<span class="sc" id="trNext">1</span></div>
+      <div>数:<span class="sc" id="trTaps">0</span>／次:<span class="sc" id="trNext">1</span></div>
       <div class="tm" id="trTime">60</div>
-      <div>盤面正解:<span class="sc" id="trAware">0/0</span></div>
+      <div>盤面:<span class="sc" id="trAware">0/0</span></div>
     </div>
     <div class="diffseg" id="diffSeg">
       <button data-d="easy" onclick="setDiff('easy')">やさしい</button>
@@ -669,6 +669,7 @@ async function load(){
   if(!Array.isArray(D.customFocuses))D.customFocuses=[];
   if(!Array.isArray(D.cleared))D.cleared=[];
   if(!D.diff)D.diff='easy';
+  if(typeof D.trBest!=='number')D.trBest=0;
   syncCleared();
   if(!D.curTask||!taskById(D.curTask)) D.curTask=(firstUnclearedTask()||roadmapTasks()[0]).id;
   save();
@@ -945,7 +946,7 @@ function rateBars(list,keyFn){
 }
 async function resetAll(){
   if(!confirm('すべての記録を消します。よろしいですか?'))return;
-  D={matches:[],customFocuses:[],diff:D.diff||'easy',curTask:(roadmapTasks()[0]||{}).id,cleared:[]};
+  D={matches:[],customFocuses:[],diff:D.diff||'easy',curTask:(roadmapTasks()[0]||{}).id,cleared:[],trBest:D.trBest||0};
   try{localStorage.removeItem(KEY);}catch(e){}
   mem=null; save(); renderAll(); toast('リセットしました');
 }
@@ -1004,7 +1005,7 @@ function copyAIReport(){
 }
 
 /* ================= training: map-reading drill ================= */
-let tr={on:false,seen:0,events:0,time:60,timers:[],players:[],quizTimeout:null,next:1,sets:0};
+let tr={on:false,seen:0,events:0,time:60,timers:[],players:[],quizTimeout:null,next:1,sets:0,taps:0,quizActive:false};
 function clamp01(v){return Math.min(1,Math.max(0,v));}
 function makePlayers(){
   const mm=document.getElementById('minimap');
@@ -1055,7 +1056,7 @@ function moveAll(){
 function toggleTraining(){ if(tr.on)stopTraining(); else startTraining(); }
 function startTraining(){
   if(tr.on)return;
-  tr={on:true,seen:0,events:0,time:60,timers:[],players:[],quizTimeout:null,next:1,sets:0,quizActive:false};
+  tr={on:true,seen:0,events:0,time:60,timers:[],players:[],quizTimeout:null,next:1,sets:0,taps:0,quizActive:false};
   makePlayers(); newSet(); upd();
   document.getElementById('drillQuiz').classList.remove('on');
   document.getElementById('trBtn').textContent='■ 中断する';
@@ -1157,7 +1158,7 @@ function tapNum(b,n){
   const NUMS=curDiff().nums;
   if(n===tr.next){
     b.classList.add('gone'); setTimeout(()=>b.remove(),180);
-    tr.next++;
+    tr.next++; tr.taps++;
     if(tr.next>NUMS){tr.sets++; toast('セットクリア!'); newSet();}
     upd();
   }else{
@@ -1165,6 +1166,7 @@ function tapNum(b,n){
   }
 }
 function upd(){
+  document.getElementById('trTaps').textContent=tr.taps;
   document.getElementById('trNext').textContent=tr.next>curDiff().nums?'✓':tr.next;
   document.getElementById('trTime').textContent=tr.time;
   document.getElementById('trAware').textContent=tr.seen+'/'+tr.events;
@@ -1183,12 +1185,27 @@ function stopTraining(){
 function endTraining(){
   cleanupTraining();
   document.getElementById('trBtn').textContent='もう一回(60秒)';
-  const rate=tr.events?Math.round(100*tr.seen/tr.events):0;
-  let msg;
-  if(rate>=80)msg=`正解率${rate}%!手元に集中しながら盤面が読めてる`;
-  else if(rate>=50)msg=`正解率${rate}%。チラ見の回数を増やそう`;
-  else msg=`正解率${rate}%。まず手を止めてでも盤面を見る癖から`;
-  toast(msg+`(${tr.sets}セット完了)`);
+  const rate=tr.events?tr.seen/tr.events:0;
+  const score=Math.round(tr.taps*rate);
+  const prevBest=D.trBest||0;
+  const isBest=score>prevBest;
+  if(isBest){D.trBest=score;save();}
+  showResult(score,rate,isBest);
+}
+function showResult(score,rate,isBest){
+  const ov=document.getElementById('drillQuiz');
+  document.getElementById('dqQ').innerHTML='スコア <span style="color:var(--lime)">'+score+'</span> 点'+(isBest?' <span style="color:var(--yellow);font-size:13px">★ベスト更新!</span>':'');
+  const ow=document.getElementById('dqOpts'); ow.innerHTML='';
+  const fb=rate>=0.8?'盤面がよく読めてる!':rate>=0.5?'チラ見の回数を増やそう':'まず盤面を見る癖から';
+  const info=document.createElement('div');
+  info.style.cssText='width:100%;font-size:14px;color:var(--text);line-height:2;text-align:center;margin-bottom:4px';
+  info.innerHTML='数字 '+tr.taps+' × 正解率 '+Math.round(rate*100)+'%'+
+    '<br><span style="color:var(--muted);font-size:12px">'+tr.sets+'セット ・ 盤面'+tr.seen+'/'+tr.events+' ・ 自己ベスト '+(D.trBest||0)+'</span>'+
+    '<br><span style="color:var(--muted);font-size:12px">'+fb+'</span>';
+  ow.appendChild(info);
+  const b=document.createElement('button');b.textContent='閉じる';b.onclick=()=>ov.classList.remove('on');
+  ow.appendChild(b);
+  ov.classList.add('on');
 }
 
 /* ================= misc ================= */
