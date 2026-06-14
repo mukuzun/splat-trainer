@@ -175,16 +175,22 @@ select.inp{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 5
 .lp.ally{background:var(--lime)}.lp.foe{background:var(--pink)}
 .lp.dead{background:var(--surface);border:2px solid var(--line);transform:rotate(45deg) scale(.74)}
 .lp.gap{width:12px;background:none!important;border:none!important;margin:0 2px}
+.lp.sp{box-shadow:0 0 0 3px var(--yellow),0 0 9px var(--yellow)}
 .minimap{position:relative;height:104px;background:var(--surface);border:1px solid var(--line);
   border-radius:16px;overflow:hidden;margin-bottom:8px;flex:none}
-.minimap .zg{position:absolute;top:8px;bottom:8px;width:1px;background:var(--line);opacity:.45}
-.minimap .zlabels{position:absolute;top:6px;left:0;right:0;display:flex;pointer-events:none}
-.minimap .zlabels span{flex:1;text-align:center;font-size:10px;font-weight:800;color:var(--muted)}
+.minimap .mzone{position:absolute;top:0;bottom:0;width:33.34%}
+.minimap .z-l{left:0;background:rgba(53,224,242,.16)}
+.minimap .z-m{left:33.33%;background:rgba(142,138,166,.13);border-left:1px solid rgba(255,255,255,.2);border-right:1px solid rgba(255,255,255,.2)}
+.minimap .z-r{left:66.66%;background:rgba(168,130,255,.20)}
+.minimap .zlabels{position:absolute;top:5px;left:0;right:0;display:flex;pointer-events:none;z-index:2}
+.minimap .zlabels span{flex:1;text-align:center;font-size:12px;font-weight:800}
+.minimap .zl-l{color:var(--cyan)}.minimap .zl-m{color:#cfcbe0}.minimap .zl-r{color:#b89cff}
 .dot{position:absolute;width:20px;height:20px;border-radius:52% 48% 55% 45%;
   transform:translate(-50%,-50%);transition:left .85s ease,top .85s ease,opacity .3s}
 .dot.foe{background:var(--pink);box-shadow:0 0 10px rgba(242,60,140,.55)}
 .dot.ally{background:var(--lime);box-shadow:0 0 10px rgba(191,242,46,.5)}
 .dot.hide{opacity:0}
+.dot.sp{box-shadow:0 0 0 3px var(--yellow),0 0 11px var(--yellow)}
 .qbox{background:var(--surface);border:2px solid var(--cyan);border-radius:24px;padding:30px 24px;
   max-width:380px;width:100%;text-align:center}
 .qbox .q{font-family:var(--disp);font-size:20px;margin-bottom:22px;line-height:1.45}
@@ -401,17 +407,18 @@ small.note{display:block;color:var(--muted);font-size:11.5px;line-height:1.6;mar
       <summary>遊び方</summary>
       <small class="note">
         下のフィールドの数字インクを<b>1から順番にタップ</b>(=塗り・撃ち合いの代わり。集中を持っていかれる作業役)。最後まで押し切ると新しい配置でループ。
-        その間、上の<b>イカランプ</b>で味方(緑)・敵(ピンク)の生死=人数有利/不利が変化し、
-        ミニマップでは生きているイカが動き、ときどき潜伏(消える)します。
-        <b>突然クイズだけの画面になり「人数は有利?不利?」「敵/味方はどこに多い?」「敵は何人見えた?」</b>と聞かれるので、
-        手元をやりながらチラ見で盤面を覚えて即答。実戦の「塗りながら盤面を読む」神経を鍛えます。正解率80%目標。
+        その間、上の<b>イカランプ</b>で味方(緑)・敵(ピンク)の生死=人数有利/不利が変化し、<b>黄色く光る人はSPがたまっている</b>合図。
+        ミニマップは左(青)・中(灰)・右(紫)で色分け。生きているイカが動き、ときどき潜伏(消える)します。
+        <b>突然クイズだけの画面になり「人数は有利?不利?」「敵/味方はどこに多い?」「SPがたまってる人は何人?」</b>等を聞かれるので、
+        手元をやりながらチラ見で盤面を覚えて即答(クイズ中は盤面が止まります)。実戦の「塗りながら盤面を読む」神経を鍛えます。正解率80%目標。
       </small>
     </details>
     <div class="lampbar" id="lampBar"></div>
     <div class="minimap" id="minimap">
-      <div class="zg" style="left:33.3%"></div>
-      <div class="zg" style="left:66.6%"></div>
-      <div class="zlabels"><span>左</span><span>中</span><span>右</span></div>
+      <div class="mzone z-l"></div>
+      <div class="mzone z-m"></div>
+      <div class="mzone z-r"></div>
+      <div class="zlabels"><span class="zl-l">左</span><span class="zl-m">中</span><span class="zl-r">右</span></div>
     </div>
     <div class="field" id="field"></div>
     <div class="hud">
@@ -1007,7 +1014,7 @@ function makePlayers(){
     for(let i=0;i<4;i++){
       const el=document.createElement('div');el.className='dot '+side;
       mm.appendChild(el);
-      const p={el,side,x:Math.random(),y:Math.random(),alive:true,hidden:false};
+      const p={el,side,x:Math.random(),y:Math.random(),alive:true,hidden:false,sp:false};
       tr.players.push(p);placePlayer(p);
     }
   });
@@ -1017,23 +1024,26 @@ function placePlayer(p){
   p.el.style.left=(8+p.x*84)+'%';
   p.el.style.top=(16+p.y*68)+'%';
   p.el.classList.toggle('hide',!(p.alive&&!p.hidden));
+  p.el.classList.toggle('sp',!!(p.alive&&!p.hidden&&p.sp));
 }
 function drawLamps(){
-  const lamp=p=>`<div class="lp ${p.alive?p.side:'dead'}"></div>`;
+  const lamp=p=>`<div class="lp ${p.alive?p.side:'dead'}${p.alive&&p.sp?' sp':''}"></div>`;
   const allies=tr.players.filter(p=>p.side==='ally');
   const foes=tr.players.filter(p=>p.side==='foe');
   document.getElementById('lampBar').innerHTML=
     allies.map(lamp).join('')+'<div class="lp gap"></div>'+foes.map(lamp).join('');
 }
 function moveAll(){
+  if(tr.quizActive)return; // クイズ中は盤面を止める(出題時の状態で固定)
   const d=curDiff();
   tr.players.forEach(p=>{
     if(p.alive){
       p.x=clamp01(p.x+(Math.random()-0.5)*0.5);
       p.y=clamp01(p.y+(Math.random()-0.5)*0.5);
       if(Math.random()<d.hide)p.hidden=!p.hidden; // 潜伏トグル(生存・ランプは点灯)
+      if(Math.random()<(d.sp||0.1))p.sp=!p.sp; // SPが溜まる/使う
     }
-    if(Math.random()<d.die){p.alive=!p.alive;if(p.alive)p.hidden=false;} // 倒れる/復帰
+    if(Math.random()<d.die){p.alive=!p.alive;if(p.alive){p.hidden=false;}else{p.hidden=false;p.sp=false;}} // 倒れる/復帰(死亡でSP消失)
   });
   ['ally','foe'].forEach(side=>{ // 各チーム最低1人は生存
     const team=tr.players.filter(p=>p.side===side);
@@ -1045,7 +1055,7 @@ function moveAll(){
 function toggleTraining(){ if(tr.on)stopTraining(); else startTraining(); }
 function startTraining(){
   if(tr.on)return;
-  tr={on:true,seen:0,events:0,time:60,timers:[],players:[],quizTimeout:null,next:1,sets:0};
+  tr={on:true,seen:0,events:0,time:60,timers:[],players:[],quizTimeout:null,next:1,sets:0,quizActive:false};
   makePlayers(); newSet(); upd();
   document.getElementById('drillQuiz').classList.remove('on');
   document.getElementById('trBtn').textContent='■ 中断する';
@@ -1061,27 +1071,34 @@ function scheduleQuiz(){
 }
 function advLabel(a,f){return a>f?'有利':a<f?'不利':'五分';}
 function fireQuiz(){
-  tr.events++;
+  tr.events++; tr.quizActive=true; // 出題した瞬間の盤面で固定(moveAllが止まる)
   const allies=tr.players.filter(p=>p.side==='ally');
   const foes=tr.players.filter(p=>p.side==='foe');
   const allyAlive=allies.filter(p=>p.alive).length;
   const foeAlive=foes.filter(p=>p.alive).length;
   const visFoe=foes.filter(p=>p.alive&&!p.hidden);
   const visAlly=allies.filter(p=>p.alive&&!p.hidden);
+  const spAlly=allies.filter(p=>p.alive&&p.sp).length;
+  const spFoe=foes.filter(p=>p.alive&&p.sp).length;
   const types=curDiff().types;
   let type=types[Math.floor(Math.random()*types.length)];
   if(type==='foeWhere'&&!visFoe.length)type='adv';
   if(type==='allyWhere'&&!visAlly.length)type='adv';
-  let q,opts,correct;
+  let q,opts,correct; // correctは配列(引き分けは複数正解)
   if(type==='adv'){
-    q='今、人数は?'; opts=['有利','五分','不利']; correct=advLabel(allyAlive,foeAlive);
+    q='今、人数は?'; opts=['有利','五分','不利']; correct=[advLabel(allyAlive,foeAlive)];
   }else if(type==='foeCount'){
-    q='敵はマップに何人見えてた?'; opts=['0','1','2','3','4']; correct=String(visFoe.length);
+    q='敵はマップに何人見えてた?'; opts=['0','1','2','3','4']; correct=[String(visFoe.length)];
+  }else if(type==='spAlly'){
+    q='SPがたまってる味方は何人?(黄色く光ってる)'; opts=['0','1','2','3','4']; correct=[String(spAlly)];
+  }else if(type==='spFoe'){
+    q='SPがたまってる敵は何人?(黄色く光ってる)'; opts=['0','1','2','3','4']; correct=[String(spFoe)];
   }else{
     const team=type==='foeWhere'?visFoe:visAlly;
     const z={'左':0,'中':0,'右':0};
     team.forEach(p=>{z[p.x<1/3?'左':p.x<2/3?'中':'右']++;});
-    let mx=-1;correct='中';['左','中','右'].forEach(k=>{if(z[k]>mx){mx=z[k];correct=k;}});
+    const mx=Math.max(z['左'],z['中'],z['右']);
+    correct=['左','中','右'].filter(k=>z[k]===mx); // 引き分けはどれでも正解
     q=(type==='foeWhere'?'敵':'味方')+'が多かったのは?'; opts=['左','中','右'];
   }
   showQuiz(q,opts,correct);
@@ -1091,7 +1108,7 @@ function showQuiz(q,opts,correct){
   document.getElementById('dqQ').textContent=q;
   const ow=document.getElementById('dqOpts'); ow.innerHTML='';
   opts.forEach(o=>{const b=document.createElement('button');b.textContent=o;
-    b.onclick=()=>answerQuiz(o===correct);ow.appendChild(b);});
+    b.onclick=()=>answerQuiz(correct.includes(o));ow.appendChild(b);});
   ov.classList.add('on');
   tr.quizTimeout=setTimeout(()=>{if(ov.classList.contains('on'))answerQuiz(false);},curDiff().qTime);
   tr.timers.push(tr.quizTimeout);
@@ -1101,15 +1118,16 @@ function answerQuiz(ok){
   const ov=document.getElementById('drillQuiz');
   if(!ov.classList.contains('on'))return;
   ov.classList.remove('on');
+  tr.quizActive=false; // 盤面再開
   if(ok)tr.seen++;
   upd();
   toast(ok?'正解!':'うーん、もう一度盤面を意識');
   scheduleQuiz();
 }
 const DIFF={
-  easy:  {nums:6,  qMin:7000, qVar:3000, qTime:6000, hide:0.06, die:0.03, types:['adv','foeWhere','allyWhere']},
-  normal:{nums:9,  qMin:5500, qVar:3000, qTime:5000, hide:0.10, die:0.05, types:['adv','foeWhere','allyWhere','foeCount']},
-  hard:  {nums:12, qMin:4500, qVar:3500, qTime:4000, hide:0.14, die:0.07, types:['adv','foeWhere','allyWhere','foeCount']}
+  easy:  {nums:6,  qMin:7000, qVar:3000, qTime:6000, hide:0.06, die:0.03, sp:0.08, types:['adv','foeWhere','allyWhere','spAlly']},
+  normal:{nums:9,  qMin:5500, qVar:3000, qTime:5000, hide:0.10, die:0.05, sp:0.10, types:['adv','foeWhere','allyWhere','foeCount','spAlly','spFoe']},
+  hard:  {nums:12, qMin:4500, qVar:3500, qTime:4000, hide:0.14, die:0.07, sp:0.12, types:['adv','foeWhere','allyWhere','foeCount','spAlly','spFoe']}
 };
 function curDiff(){return DIFF[D.diff]||DIFF.easy;}
 function setDiff(d){D.diff=d;save();renderDiff();toast('難易度:'+({easy:'やさしい',normal:'ふつう',hard:'むずい'}[d]));}
