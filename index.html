@@ -91,6 +91,35 @@ nav button.on .ic{filter:drop-shadow(0 0 6px rgba(191,242,46,.6))}
   font-size:11px;font-weight:700;padding:5px 11px;cursor:pointer;white-space:nowrap}
 .fbi{font-size:10px;color:var(--muted);font-weight:700;white-space:nowrap}
 
+/* ---- roadmap ---- */
+.sticker .prog{margin-top:10px;font-size:11px;font-weight:800;background:rgba(0,0,0,.2);display:inline-block;padding:5px 11px;border-radius:99px}
+.rmhead{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.rmlv{font-family:var(--disp);font-size:24px;color:var(--lime)}
+.rmtot{color:var(--muted);font-weight:700}
+.rmpct{margin-left:auto;font-size:11px;color:var(--muted);font-weight:700}
+.rmbar{height:10px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-bottom:12px}
+.rmfl{height:100%;background:var(--lime);border-radius:99px;transition:width .4s ease}
+.rmchips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.rmchip{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.rmchip.done{background:var(--lime);color:#15141F;border-color:var(--lime)}
+.rmchip.cur{background:var(--pink);color:#fff;border-color:var(--pink);box-shadow:0 0 0 3px rgba(242,60,140,.3)}
+.rmchip.lock{opacity:.4}
+.lvblock{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.lvblock>summary{padding:11px 12px;font-family:var(--disp);font-size:14px;cursor:pointer;background:var(--surface2);list-style:none}
+.lvblock>summary::-webkit-details-marker{display:none}
+.lvbadge{font-family:var(--body);font-size:11px;font-weight:800;color:var(--lime);margin-left:6px}
+.lvcustom{padding:11px 12px;font-family:var(--disp);font-size:13px;background:var(--surface2)}
+.trow{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-top:1px dashed var(--line)}
+.trow.cur{background:rgba(191,242,46,.10)}
+.trow.done{opacity:.65}
+.trow.lock{opacity:.45}
+.trow:not(.lock):not(.done){cursor:pointer}
+.trow .ts{width:15px;color:var(--lime);font-weight:800;flex:none}
+.trow.cur .ts{color:var(--pink)}
+.trow .tt{flex:1;font-size:13px;font-weight:700;line-height:1.4}
+.trow .tt small{display:block;color:var(--muted);font-weight:500;font-size:11px;margin-top:2px}
+.trow .tm{font-size:10px;color:var(--muted);font-weight:700;white-space:nowrap;text-align:right;flex:none}
+
 /* ---- log ---- */
 .bigrow{display:flex;gap:12px;margin-bottom:14px}
 .bigrow .btn{flex:1;font-size:18px;padding:20px 10px;font-family:var(--disp);font-weight:400}
@@ -202,10 +231,11 @@ small.note{display:block;color:var(--muted);font-size:11.5px;line-height:1.6;mar
   <!-- ============ HOME ============ -->
   <section class="page on" id="pg-home">
     <div class="sticker">
-      <button class="chg" onclick="nextFocus()">課題を変える</button>
-      <div class="lab">今日の課題はこれだけ</div>
+      <button class="chg" onclick="nextFocus()">課題を選ぶ</button>
+      <div class="lab">今取り組む課題</div>
       <h2 id="focusTitle"></h2>
       <p id="focusRule"></p>
+      <div class="prog" id="focusProg"></div>
     </div>
 
     <div class="stat3">
@@ -215,25 +245,22 @@ small.note{display:block;color:var(--muted);font-size:11.5px;line-height:1.6;mar
     </div>
 
     <div class="card">
-      <div class="eyebrow">今日の課題を選ぶ・自分で追加する</div>
-      <div id="focusList"></div>
-      <div style="margin-top:12px">
+      <div class="eyebrow">上達ロードマップ・現在地</div>
+      <div class="rmhead"><span class="rmlv" id="rmLv">Lv 1</span><span class="rmtot" id="rmTot">/ 20</span><span class="rmpct" id="rmPct"></span></div>
+      <div class="rmbar"><div class="rmfl" id="rmFill"></div></div>
+      <div class="rmchips" id="rmChips"></div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">課題一覧（タップで今日の課題にセット）</div>
+      <div id="taskList"></div>
+      <div style="margin-top:14px">
+        <div class="eyebrow">自分で課題を追加</div>
         <input id="nfTitle" class="inp" placeholder="課題タイトル(例:5秒に1回マップを見る)">
         <input id="nfRule" class="inp" style="margin-top:8px" placeholder="具体ルール(例:塗りを5秒続けたら必ずミニマップを確認)">
         <button class="btn lime" style="width:100%;margin-top:8px" onclick="addFocus()">＋ 課題を追加</button>
       </div>
-      <small class="note">タイトルをタップすると今日の課題に設定。自作した課題も日替わりローテーションに入り、削除できます。</small>
-    </div>
-
-    <div class="card">
-      <div class="eyebrow">「こうなったら → こうする」ルール(試合中はこれだけ)</div>
-      <ul class="rules">
-        <li><span class="if">デス音がしたら</span>イカランプを見る</li>
-        <li><span class="if">敵インクが見えたら</span>塗らずにクリアリング</li>
-        <li><span class="if">3秒塗ったら</span>視点を一周振る</li>
-        <li><span class="if">味方SPの音がしたら</span>一緒に前へ出る</li>
-        <li><span class="if">味方が2落ちしたら</span>下がって時間を稼ぐ</li>
-      </ul>
+      <small class="note">レベルは順番に解放。直近5試合で達成率80%になった課題はクリア✓。3つ全部クリアで次のレベルへ進みます。</small>
     </div>
 
     <div class="card">
@@ -486,13 +513,108 @@ small.note{display:block;color:var(--muted);font-size:11.5px;line-height:1.6;mar
 
 <script>
 /* ================= data ================= */
-const FOCUSES=[
- {id:'lamp',  t:'デス音がしたらイカランプを見る', r:'味方・敵問わず誰かが倒れた音をトリガーに、画面上部へ視線。人数有利なら押す、不利なら下がる。'},
- {id:'clear', t:'敵インクの近くで塗り始めない',   r:'敵インクが視界にあるときは塗り作業禁止。まず撃ってクリアリングしてから塗る。'},
- {id:'paint3',t:'塗りは3秒区切りで視点を振る',     r:'3秒塗ったら一度レバーで視点を一周。塗りはエイム不要だから、塗り中こそ周りを見る。'},
- {id:'sp',    t:'味方のスペシャルに乗っかる',     r:'味方のSP発動音が聞こえたら一緒に前進。自分で起点を作るより、味方の起点に合わせる。'},
- {id:'back',  t:'味方2落ちで絶対に前に出ない',   r:'イカランプで味方が2人以上倒れていたら、下がって生存。復帰を待ってから一緒に押す。'},
- {id:'death', t:'デス数を1試合5以下に抑える',     r:'勝てるか怪しい撃ち合いは仕掛けない。生きていること自体が塗りと盤面の貢献。'},
+/* 上達ロードマップ(Lv1-20×3課題=60)。順番に登る。直近5戦で達成率80%で各課題クリア */
+const ROADMAP=[
+  {lv:1,tasks:[
+    {id:"L1a",t:"角の手前で一度止まる",r:"曲がり角や障害物の先には敵が潜みがち。曲がる前に一瞬止まって相手インクや音を確認し、いきなり飛び込まない"},
+    {id:"L1b",t:"HPが減ったら一旦下がる",r:"体力が半分を切ったら撃ち合いを続けず、安全な塗り地に潜って回復。深追いより生き残りを優先する"},
+    {id:"L1c",t:"出る前に進路を塗っておく",r:"前に出る時は自分の足元と進路をインクで塗ってから移動。塗ってあれば潜行で速く動け、被弾時も逃げやすい"}
+  ]},
+  {lv:2,tasks:[
+    {id:"L2a",t:"1試合のデスを5以下に抑える",r:"無謀な前進をやめ、勝てる相手・状況だけ撃ち合う。デスが減るほど前線の人数が安定して勝率が上がる"},
+    {id:"L2b",t:"敵インクの上を歩かない",r:"敵インクの上は移動が遅くダメージも受ける。常に自分インクや無塗り地を通るルートを選んで足を取られない"},
+    {id:"L2c",t:"1対1で不利なら逃げる",r:"射程や位置で負けている撃ち合いは続けない。物陰に隠れて潜行で離脱し、味方と合流してから仕切り直す"}
+  ]},
+  {lv:3,tasks:[
+    {id:"L3a",t:"こまめにイカランプを見る",r:"画面上部の味方・敵の生存表示を数秒おきに確認。誰が生きているかで前に出るか下がるかの判断材料になる"},
+    {id:"L3b",t:"デス音がしたら上を見る",r:"誰かが倒れた音をトリガーに画面上部へ視線。人数有利なら押す、不利なら一旦下がって立て直す"},
+    {id:"L3c",t:"復帰したら全体マップを開く",r:"やられて復帰する瞬間にマップを開き、敵味方の位置と塗り状況を把握してから前に出る方向を決める"}
+  ]},
+  {lv:4,tasks:[
+    {id:"L4a",t:"未確認エリアは撃って確認",r:"潜んでいそうな茂みや影には一発インクを撒いて反応を見る。先に居場所を割らせれば不意打ちを防げる"},
+    {id:"L4b",t:"背後を時々振り返る",r:"裏取りされていないか定期的に後方を確認。挟まれる前に気づければ被害なく対処でき、突然のデスが減る"},
+    {id:"L4c",t:"飛び込み前に味方の位置確認",r:"前に出る前に近くに味方がいるかチェック。一人だけ突出すると孤立して落とされるので、線をそろえて出る"}
+  ]},
+  {lv:5,tasks:[
+    {id:"L5a",t:"自分の射程の距離を覚える",r:"使う武器が届く間合いを体で覚える。届かない距離では撃たず、届く距離まで詰めるか相手を引き込んでから撃つ"},
+    {id:"L5b",t:"長射程には近づいて戦う",r:"自分より射程が長い相手には遠距離で勝てない。障害物を使って距離を詰め、近接の間合いに持ち込んで戦う"},
+    {id:"L5c",t:"高い位置を取って撃つ",r:"段差や台の上は相手を見下ろせて弾も当てやすい。撃ち合う時は一段高いポジションを先に確保する"}
+  ]},
+  {lv:6,tasks:[
+    {id:"L6a",t:"足元が塗れたら攻める",r:"自分の周囲がインクで満たされていれば機動力と回復が確保できる。塗り固めてから一歩前に出て圧をかける"},
+    {id:"L6b",t:"撃ち合いは物陰を背にする",r:"逃げ込める壁や障害物を背後に置いて撃ち合う。不利になったら即座に隠れて回復、有利なら出るを繰り返す"},
+    {id:"L6c",t:"勝てない時は塗りで貢献",r:"撃ち合いで分が悪い局面は無理せず床塗りやスペシャル溜めに専念。塗り面積も勝敗を左右する立派な仕事"}
+  ]},
+  {lv:7,tasks:[
+    {id:"L7a",t:"引き際は半分残して下がる",r:"体力が半分を切る前に下がる判断を。ギリギリまで粘ると逃げ切れず落とされる。余力を残した撤退が次に繋がる"},
+    {id:"L7b",t:"一試合のデスを3以下に",r:"前線維持には生存が要。勝てる撃ち合いを選び、不利な場面は塗りと位置取りで貢献してデスを3回までに抑える"},
+    {id:"L7c",t:"有利ポジを取られたら奪い返す",r:"高台や通路の要所を敵に取られると押し込まれる。スペシャルやサブを使ってでも重要ポジを取り返す意識を持つ"}
+  ]},
+  {lv:8,tasks:[
+    {id:"L8a",t:"自陣を塗って機動経路を確保",r:"自分の陣地や中央への通り道を塗り固める。復帰後や撤退時の移動が速くなり、味方の前進も支えられる"},
+    {id:"L8b",t:"敵の射程外で様子を見る",r:"相手の届かない距離で待機し、相手が動いた隙やリロードを突いて一歩踏み込む。先に手を出さず誘う立ち回り"},
+    {id:"L8c",t:"塗り状況で前線位置を決める",r:"インクの塗り分けライン＝今の前線。自陣側が広く塗られていれば押し込まれている証拠、押し返すか守るかを決める"}
+  ]},
+  {lv:9,tasks:[
+    {id:"L9a",t:"味方のSPに合わせて前に出る",r:"味方がスペシャルを発動したら一緒に前進。相手が対応に追われている隙が最大の攻め時。単独でなく波に乗る"},
+    {id:"L9b",t:"味方が落ちたら無理しない",r:"近くの味方がやられた瞬間は人数不利。その直後の突撃は孤立死につながるので、一旦下がって再合流を待つ"},
+    {id:"L9c",t:"撃ち合う味方をカバーする",r:"味方が前で撃ち合っていたら横や後ろから援護射撃。二人で一人を倒せば確実、放置して各個撃破されないようにする"}
+  ]},
+  {lv:10,tasks:[
+    {id:"L10a",t:"人数を数えてから押し引き",r:"イカランプで生存数を即カウント。自分側が多ければ前へ、少なければ下がる。数の優劣を行動の第一基準にする"},
+    {id:"L10b",t:"前線は味方とラインをそろえる",r:"一人だけ前に出ず、味方と横一線で前進する。線がそろっていれば誰かが狙われても即カバーが入り崩されにくい"},
+    {id:"L10c",t:"復帰の味方を待って攻める",r:"味方が復帰中なら数秒待ち、全員そろってから攻め込む。人数が欠けたまま仕掛けると押し切れず無駄死にする"}
+  ]},
+  {lv:11,tasks:[
+    {id:"L11a",t:"カバー後すぐ元位置へ戻る",r:"味方を助けに動いた後はだらだら留まらず素早く担当エリアへ復帰。穴が空いた場所から敵に侵入されるのを防ぐ"},
+    {id:"L11b",t:"前線を一人で空けない",r:"自分が下がる時は味方が前にいるか確認。全員同時に下がると前線が崩壊するので、誰かが残るよう間合いを調整する"},
+    {id:"L11c",t:"味方のSPを温存させ合う",r:"スペシャルは同時より小出しに。連発できる状態を作っておくと打開や攻めで途切れず圧をかけ続けられる"}
+  ]},
+  {lv:12,tasks:[
+    {id:"L12a",t:"二人落としたら一気に詰める",r:"敵を2枚落とした瞬間は大幅な人数有利。迷わず全員で前進し、相手が復帰する前にエリアやカウントを進める"},
+    {id:"L12b",t:"味方の射程を把握して動く",r:"前衛・後衛など味方の武器役割を理解。長射程の味方の前を陣取って盾になり、後ろから撃ってもらう連携を作る"},
+    {id:"L12c",t:"孤立した敵を皆で狙う",r:"突出した敵一人を味方と集中攻撃で即処理。一人ずつ確実に減らせば、まとめて相手するより遥かに安全に有利を作れる"}
+  ]},
+  {lv:13,tasks:[
+    {id:"L13a",t:"人数不利は即座に引く",r:"イカランプで一目でも不利と分かったら撃ち合わず撤退。不利なまま戦うと連鎖的に落とされ全滅する。守りに切替える"},
+    {id:"L13b",t:"全滅させたら抑えに回る",r:"相手を全員倒した直後は最大の好機。深追いせず復帰口の手前に陣取り、敵が出てくる時間を奪ってカウントを稼ぐ"},
+    {id:"L13c",t:"カウントリードしたら堅く守る",r:"勝ちカウントに到達したら無理な攻めをやめる。要所を固めて時間を使い、リスクを最小化して逃げ切る判断に切替える"}
+  ]},
+  {lv:14,tasks:[
+    {id:"L14a",t:"負けてる時はリスクを取る",r:"カウント不利なら時間切れ前に動くしかない。スペシャルを合わせて打開を仕掛け、多少の被弾覚悟で状況を動かしにいく"},
+    {id:"L14b",t:"ヘイトが向いたら味方に譲る",r:"複数の敵に狙われたら自分は囮になって引きつけ、空いた側面から味方に倒してもらう。注目を利用して数的有利を作る"},
+    {id:"L14c",t:"打開は全員そろってから",r:"押し込まれた状況の反撃は単発では返せない。スペシャルと人数をそろえ、合図に合わせて一斉に出て一気に前線を戻す"}
+  ]},
+  {lv:15,tasks:[
+    {id:"L15a",t:"残り時間で攻守を切替える",r:"残り時間とカウントを常に意識。リードして残り少なければ守り、ビハインドなら強気に。時計を見て方針を一本化する"},
+    {id:"L15b",t:"敵のSP発動で一度引く",r:"相手のスペシャルが来たら無理に居座らず一旦退避。効果が切れる数秒を安全圏でやり過ごし、その後に出直して攻める"},
+    {id:"L15c",t:"自分への注目を読んで動く",r:"敵が自分ばかり狙うなら、わざと姿を見せて引きつけ味方の前進を作る。狙われていない時は逆に自分が詰めて圧をかける"}
+  ]},
+  {lv:16,tasks:[
+    {id:"L16a",t:"有利不利を3秒で判断する",r:"撃ち合う前にイカランプと位置を見て勝てるか即決。迷うくらいなら一旦引く。素早い損切りの積み重ねが安定につながる"},
+    {id:"L16b",t:"抑え時は復帰口を塞ぐ",r:"全滅後の抑えでは敵の出口手前を塗って固め、出てきた所を即撃ち。再集結させない時間稼ぎが大量カウントを生む"},
+    {id:"L16c",t:"カウント拮抗は無理しない",r:"接戦の終盤ほど一つのデスが致命傷。確実に勝てる撃ち合いだけ受け、五分の勝負は避けて事故を起こさない立ち回りを"}
+  ]},
+  {lv:17,tasks:[
+    {id:"L17a",t:"キル後は欲張らず位置を直す",r:"敵を倒した直後は隙が大きい。連続キルを狙って突っ込まず、安全な位置に戻って体勢を整えてから次の行動に移る"},
+    {id:"L17b",t:"競った場面ほど基本を徹底",r:"プレッシャーがかかるほどクリアリング・足場塗り・イカランプ確認の基礎を丁寧に。焦りによる凡ミスが勝敗を分ける"},
+    {id:"L17c",t:"一試合のデスを1以下に",r:"終盤の安定にはほぼ落ちない立ち回りが必要。撃ち合いを徹底的に選び、少しでも不利なら引く。生存を最優先する"}
+  ]},
+  {lv:18,tasks:[
+    {id:"L18a",t:"詰めるか退くかを即決する",r:"中途半端が一番危険。勝てる根拠があるなら一気に詰め、無いなら迷わず退く。曖昧な前進をなくして判断を二択化する"},
+    {id:"L18b",t:"終盤の一手を逆算で選ぶ",r:"残りカウントと時間から勝ち筋を逆算し、必要な行動だけ取る。守るのか取り返すのか、勝利条件から逆算して動く"},
+    {id:"L18c",t:"SPは勝ち筋に絞って使う",r:"スペシャルを塗りや牽制で浪費せず、打開・抑え・カウント前進など試合を動かす局面に温存して切る。一発の価値を最大化"}
+  ]},
+  {lv:19,tasks:[
+    {id:"L19a",t:"不利でも崩れず立て直す",r:"連続でやられても焦らない。一度全員で下がって人数とSPをそろえ直し、整った状態から打開する。崩れた時こそ落ち着く"},
+    {id:"L19b",t:"勝ちパターンを再現する",r:"上手くいった攻め方を意識して繰り返す。毎回違う動きより、勝てた形を狙って作るほうが安定して勝率が上がる"},
+    {id:"L19c",t:"ラスト10秒の択を準備する",r:"終了間際に何をするか事前に決めておく。守り切るのか特攻して止めるのか、残り10秒前から心づもりして迷わず実行する"}
+  ]},
+  {lv:20,tasks:[
+    {id:"L20a",t:"全局面で人数管理を最優先",r:"押し引き・打開・抑えすべての根拠を人数差に置く。常に生存数を把握し、有利を逃さず不利を作らない判断を一貫させる"},
+    {id:"L20b",t:"自分の役割を試合中で変える",r:"前で崩す・後ろで支える・囮になるを状況で切替える。味方構成と戦況を読み、勝つために今必要な役を自分で選んで担う"},
+    {id:"L20c",t:"安定して勝てる動きを固定する",r:"気分や調子に左右されず、毎試合同じ基準で判断・行動する。再現性こそが上達の証。勝ちを運でなく実力で繰り返す"}
+  ]}
 ];
 const DEATH_TAGS=['塗り中に潜伏キル','無警戒で奇襲された','前に詰めるのが早すぎた','孤立して囲まれた','人数不利で突撃','正面で撃ち負けた','射程負けの相手に挑んだ','裏取りされた','引き際が遅れた','キルを深追いした','敵SPに巻き込まれた','ボムをもらった','復帰直後にやられた','インク切れで撃ち負けた','高台・有利ポジから撃たれた','その他'];
 const STAGES=['ユノハナ大渓谷','ゴンズイ地区','ヤガラ市場','マテガイ放水路','ナメロウ金属','マサバ海峡大橋','キンメダイ美術館','マヒマヒリゾート&スパ','海女美術大学','チョウザメ造船','ザトウマーケット','スメーシーワールド','クサヤ温泉','ヒラメが丘団地','ナンプラー遺跡','マンタマリア号','タラポートショッピングパーク','コンブトラック','タカアシ経済特区','オヒョウ海運','バイガイ亭','ネギトロ炭鉱','カジキ空港','リュウグウターミナル','デカライン高架下'];
@@ -513,22 +635,36 @@ const WEAPONS={
  'その他':['その他']
 };
 const KEY='splat-trainer-v1';
-let D={matches:[],focusIdx:0,focusDate:'',customFocuses:[],diff:'easy'};
+let D={matches:[],customFocuses:[],diff:'easy',curTask:null,cleared:[]};
 let mem=null; // fallback storage
 
-function allFocuses(){return FOCUSES.concat(D.customFocuses||[]);}
-function curFocus(){const all=allFocuses();if(D.focusIdx>=all.length||D.focusIdx<0)D.focusIdx=0;return all[D.focusIdx]||all[0];}
+/* ---- roadmap helpers ---- */
+function roadmapTasks(){return ROADMAP.flatMap(l=>l.tasks.map(t=>({...t,lv:l.lv})));}
+function allTasks(){return roadmapTasks().concat((D.customFocuses||[]).map(t=>({...t,lv:0})));}
+function taskById(id){return allTasks().find(t=>t.id===id);}
+function taskRecords(id){return D.matches.filter(m=>m.fid===id&&m.fd!=null);}
+function isCleared(id){
+  if((D.cleared||[]).includes(id))return true;
+  const r=taskRecords(id).slice(-5);
+  return r.length>=5 && r.filter(m=>m.fd).length/r.length>=0.8;
+}
+function taskProgress(id){const r=taskRecords(id).slice(-5);return {n:r.length,ok:r.filter(m=>m.fd).length};}
+function levelCleared(lv){const L=ROADMAP.find(x=>x.lv===lv);return !!L&&L.tasks.every(t=>isCleared(t.id));}
+function currentLevel(){for(const L of ROADMAP){if(!L.tasks.every(t=>isCleared(t.id)))return L.lv;}return ROADMAP[ROADMAP.length-1].lv;}
+function levelUnlocked(lv){return lv<=currentLevel();}
+function firstUnclearedTask(){const lv=currentLevel();const L=ROADMAP.find(x=>x.lv===lv);if(L){const t=L.tasks.find(t=>!isCleared(t.id));if(t)return {...t,lv};}return null;}
+function curFocus(){return taskById(D.curTask)||firstUnclearedTask()||roadmapTasks()[0];}
+function syncCleared(){D.cleared=D.cleared||[];roadmapTasks().forEach(t=>{if(!D.cleared.includes(t.id)&&isCleared(t.id))D.cleared.push(t.id);});}
 
 async function load(){
   try{const r=localStorage.getItem(KEY); if(r){D=JSON.parse(r);} }
   catch(e){ if(mem) D=JSON.parse(mem); }
   if(!Array.isArray(D.customFocuses))D.customFocuses=[];
+  if(!Array.isArray(D.cleared))D.cleared=[];
   if(!D.diff)D.diff='easy';
-  const today=dstr(new Date());
-  if(D.focusDate!==today){ // 日替わりで課題をローテーション
-    if(D.focusDate) D.focusIdx=(D.focusIdx+1)%allFocuses().length;
-    D.focusDate=today; save();
-  }
+  syncCleared();
+  if(!D.curTask||!taskById(D.curTask)) D.curTask=(firstUnclearedTask()||roadmapTasks()[0]).id;
+  save();
   renderAll();
 }
 async function save(){
@@ -549,8 +685,14 @@ function go(p,btn){
 /* ================= home ================= */
 function renderHome(){
   const f=curFocus();
+  const pg=taskProgress(f.id);
   document.getElementById('focusTitle').textContent=f.t;
   document.getElementById('focusRule').textContent=f.r;
+  const lab=document.getElementById('focusProg');
+  if(lab){
+    if(f.lv===0)lab.textContent='自作課題';
+    else lab.textContent='Lv'+f.lv+'・クリアまで '+pg.ok+'/5(直近5戦で80%)';
+  }
   const today=dstr(new Date());
   const tm=D.matches.filter(m=>m.d===today);
   document.getElementById('stToday').textContent=tm.length;
@@ -559,19 +701,56 @@ function renderHome(){
   const fd=last.filter(m=>m.fd!==null&&m.fd!==undefined);
   document.getElementById('stFocus').textContent=fd.length?Math.round(100*fd.filter(m=>m.fd).length/fd.length)+'%':'-';
 }
-function nextFocus(){D.focusIdx=(D.focusIdx+1)%allFocuses().length;save();renderHome();renderFocusList();toast('課題を変更しました');}
+function nextFocus(){document.getElementById('taskList').scrollIntoView({behavior:'smooth'});toast('下の一覧から課題を選べます');}
 
-/* ---- focus manager ---- */
-function renderFocusList(){
-  const all=allFocuses();
-  const el=document.getElementById('focusList');
-  el.innerHTML=all.map((f,i)=>`
-   <div class="frow ${i===D.focusIdx?'cur':''}">
-     <button class="fpick" onclick="setFocus(${i})">${i===D.focusIdx?'● ':''}${esc(f.t)}<small>${esc(f.r||'')}</small></button>
-     ${f.custom?`<button class="fdel" onclick="delFocus('${f.id}')">削除</button>`:'<span class="fbi">標準</span>'}
-   </div>`).join('');
+/* ---- roadmap: 現在地 ---- */
+function renderRoadmap(){
+  const tasks=roadmapTasks();
+  const total=tasks.length, cleared=tasks.filter(t=>isCleared(t.id)).length;
+  const lv=currentLevel();
+  document.getElementById('rmLv').textContent='Lv '+lv;
+  document.getElementById('rmTot').textContent='/ '+ROADMAP.length;
+  document.getElementById('rmPct').textContent=Math.round(100*cleared/total)+'% ('+cleared+'/'+total+'課題)';
+  document.getElementById('rmFill').style.width=Math.round(100*cleared/total)+'%';
+  const c=document.getElementById('rmChips');
+  c.innerHTML=ROADMAP.map(L=>{
+    const done=L.tasks.every(t=>isCleared(t.id));
+    const cls=done?'done':(L.lv===lv?'cur':levelUnlocked(L.lv)?'open':'lock');
+    return '<span class="rmchip '+cls+'">'+L.lv+'</span>';
+  }).join('');
+  const cur=c.querySelector('.rmchip.cur'); if(cur)cur.scrollIntoView({inline:'center',block:'nearest'});
 }
-function setFocus(i){D.focusIdx=i;save();renderHome();renderFocusList();toast('今日の課題を変えました');}
+
+/* ---- 課題一覧 ---- */
+function renderTaskList(){
+  const lv=currentLevel();
+  let html=ROADMAP.map(L=>{
+    const unlocked=levelUnlocked(L.lv), done=L.tasks.every(t=>isCleared(t.id));
+    const open=(L.lv===lv)?' open':'';
+    const badge=done?'✓クリア':unlocked?'':'🔒';
+    const rows=L.tasks.map(t=>{
+      const cl=isCleared(t.id), curr=(D.curTask===t.id), pg=taskProgress(t.id);
+      const status=cl?'✓':curr?'●':'';
+      const meta=cl?'クリア':(unlocked?pg.ok+'/'+pg.n+'戦':'未解放');
+      const tap=(unlocked&&!cl)?' onclick="setFocus(\''+t.id+'\')"':'';
+      return '<div class="trow'+(curr?' cur':'')+(cl?' done':'')+(!unlocked?' lock':'')+'"'+tap+'>'+
+        '<span class="ts">'+status+'</span><span class="tt">'+esc(t.t)+'<small>'+esc(t.r)+'</small></span>'+
+        '<span class="tm">'+meta+'</span></div>';
+    }).join('');
+    return '<details class="lvblock"'+open+'><summary>Lv '+L.lv+' <span class="lvbadge">'+badge+'</span></summary>'+rows+'</details>';
+  }).join('');
+  if((D.customFocuses||[]).length){
+    html+='<div class="lvblock"><div class="lvcustom">自作課題</div>'+
+      D.customFocuses.map(t=>{
+        const curr=(D.curTask===t.id);
+        return '<div class="trow'+(curr?' cur':'')+'" onclick="setFocus(\''+t.id+'\')">'+
+          '<span class="ts">'+(curr?'●':'')+'</span><span class="tt">'+esc(t.t)+'<small>'+esc(t.r||'')+'</small></span>'+
+          '<button class="fdel" onclick="event.stopPropagation();delFocus(\''+t.id+'\')">削除</button></div>';
+      }).join('')+'</div>';
+  }
+  document.getElementById('taskList').innerHTML=html;
+}
+function setFocus(id){if(!taskById(id))return;D.curTask=id;save();renderHome();renderTaskList();renderRoadmap();toast('今日の課題にしました');window.scrollTo({top:0,behavior:'smooth'});}
 function addFocus(){
   const t=document.getElementById('nfTitle').value.trim();
   const r=document.getElementById('nfRule').value.trim();
@@ -580,15 +759,15 @@ function addFocus(){
   D.customFocuses.push({id:'c'+Date.now(),t,r:r||t,custom:true});
   document.getElementById('nfTitle').value='';
   document.getElementById('nfRule').value='';
-  save();renderHome();renderFocusList();toast('課題を追加しました');
+  save();renderTaskList();toast('自作課題を追加しました');
 }
 function delFocus(id){
   const f=(D.customFocuses||[]).find(x=>x.id===id);
   if(!f)return;
   if(!confirm('この課題を削除しますか?\n'+f.t))return;
   D.customFocuses=D.customFocuses.filter(x=>x.id!==id);
-  if(D.focusIdx>=allFocuses().length)D.focusIdx=0;
-  save();renderHome();renderFocusList();toast('削除しました');
+  if(D.curTask===id)D.curTask=(firstUnclearedTask()||roadmapTasks()[0]).id;
+  save();renderHome();renderTaskList();renderRoadmap();toast('削除しました');
 }
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -650,13 +829,23 @@ function saveMatch(){
   const wp=document.getElementById('inWeapon').value||null;
   if(stage)D.lastStage=stage; if(wp)D.lastWeapon=wp; if(cur.rule)D.lastRule=cur.rule;
   const comp=[cur.compType,cur.compSp,cur.compWp].filter(Boolean);
+  const tid=curFocus().id;
   D.matches.push({d:dstr(new Date()),t:Date.now(),res:cur.res,fd:cur.fd,tags:cur.tags,
-    fid:curFocus().id,rule:cur.rule,stage,k,dd,wp,comp});
+    fid:tid,rule:cur.rule,stage,k,dd,wp,comp});
+  const wasCleared=(D.cleared||[]).includes(tid);
+  syncCleared();
+  let justCleared=false;
+  if(!wasCleared && (D.cleared||[]).includes(tid)){ // この課題が今クリアされた
+    justCleared=true;
+    const nx=firstUnclearedTask();
+    if(nx)D.curTask=nx.id;
+  }
   save(); cancelLog(); renderAll();
   // 2連敗チェック(今日の直近2戦)
   const today=dstr(new Date());
   const tm=D.matches.filter(m=>m.d===today);
   if(tm.length>=2 && tm[tm.length-1].res==='lose' && tm[tm.length-2].res==='lose'){openBreak();}
+  else if(justCleared){toast('🎉 課題クリア!次の課題へ');}
   else toast('記録しました!');
 }
 function renderLog(){
@@ -748,7 +937,7 @@ function rateBars(list,keyFn){
 }
 async function resetAll(){
   if(!confirm('すべての記録を消します。よろしいですか?'))return;
-  D={matches:[],focusIdx:0,focusDate:dstr(new Date()),customFocuses:[]};
+  D={matches:[],customFocuses:[],diff:D.diff||'easy',curTask:(roadmapTasks()[0]||{}).id,cleared:[]};
   try{localStorage.removeItem(KEY);}catch(e){}
   mem=null; save(); renderAll(); toast('リセットしました');
 }
@@ -988,7 +1177,7 @@ let toastTimer=null;
 function toast(s){const t=document.getElementById('toast');t.textContent=s;
   t.classList.remove('on');void t.offsetWidth;t.classList.add('on');
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('on'),3000);}
-function renderAll(){renderHome();renderFocusList();renderLog();renderDiff();
+function renderAll(){renderHome();renderRoadmap();renderTaskList();renderLog();renderDiff();
   const d=new Date();
   document.getElementById('hdrDate').textContent=(d.getMonth()+1)+'/'+d.getDate()+' '+'日月火水木金土'[d.getDay()];
 }
