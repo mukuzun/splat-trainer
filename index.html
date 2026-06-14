@@ -255,7 +255,7 @@ small.note{display:block;color:var(--muted);font-size:11.5px;line-height:1.6;mar
       <div class="eyebrow">課題一覧（タップで今日の課題にセット）</div>
       <div id="taskList"></div>
       <div style="margin-top:14px">
-        <div class="eyebrow">自分で課題を追加</div>
+        <div class="eyebrow">オリジナル課題を追加（一覧の先頭に表示）</div>
         <input id="nfTitle" class="inp" placeholder="課題タイトル(例:5秒に1回マップを見る)">
         <input id="nfRule" class="inp" style="margin-top:8px" placeholder="具体ルール(例:塗りを5秒続けたら必ずミニマップを確認)">
         <button class="btn lime" style="width:100%;margin-top:8px" onclick="addFocus()">＋ 課題を追加</button>
@@ -724,7 +724,7 @@ function renderRoadmap(){
 /* ---- 課題一覧 ---- */
 function renderTaskList(){
   const lv=currentLevel();
-  let html=ROADMAP.map(L=>{
+  let levels=ROADMAP.map(L=>{
     const unlocked=levelUnlocked(L.lv), done=L.tasks.every(t=>isCleared(t.id));
     const open=(L.lv===lv)?' open':'';
     const badge=done?'✓クリア':unlocked?'':'🔒';
@@ -739,8 +739,9 @@ function renderTaskList(){
     }).join('');
     return '<details class="lvblock"'+open+'><summary>Lv '+L.lv+' <span class="lvbadge">'+badge+'</span></summary>'+rows+'</details>';
   }).join('');
+  let custom='';
   if((D.customFocuses||[]).length){
-    html+='<div class="lvblock"><div class="lvcustom">自作課題</div>'+
+    custom='<div class="lvblock"><div class="lvcustom">⭐ オリジナル課題</div>'+
       D.customFocuses.map(t=>{
         const curr=(D.curTask===t.id);
         return '<div class="trow'+(curr?' cur':'')+'" onclick="setFocus(\''+t.id+'\')">'+
@@ -748,7 +749,7 @@ function renderTaskList(){
           '<button class="fdel" onclick="event.stopPropagation();delFocus(\''+t.id+'\')">削除</button></div>';
       }).join('')+'</div>';
   }
-  document.getElementById('taskList').innerHTML=html;
+  document.getElementById('taskList').innerHTML=custom+levels;
 }
 function setFocus(id){if(!taskById(id))return;D.curTask=id;save();renderHome();renderTaskList();renderRoadmap();toast('今日の課題にしました');window.scrollTo({top:0,behavior:'smooth'});}
 function addFocus(){
@@ -759,7 +760,7 @@ function addFocus(){
   D.customFocuses.push({id:'c'+Date.now(),t,r:r||t,custom:true});
   document.getElementById('nfTitle').value='';
   document.getElementById('nfRule').value='';
-  save();renderTaskList();toast('自作課題を追加しました');
+  save();renderTaskList();toast('オリジナル課題を追加しました');
 }
 function delFocus(id){
   const f=(D.customFocuses||[]).find(x=>x.id===id);
